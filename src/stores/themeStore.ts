@@ -9,9 +9,6 @@ interface ThemeStore {
 
 export const useThemeStore = create<ThemeStore>((set) => ({
   theme: 'nasa',
-
-  toggleTheme: () =>
-    set((state: ThemeStore) => ({ theme: state.theme === 'nasa' ? 'light' : 'nasa' })),
-
-  setTheme: (theme: Theme) => set({ theme }),
+  toggleTheme: () => set((state) => ({ theme: state.theme === 'nasa' ? 'light' : 'nasa' })),
+  setTheme: (theme) => set({ theme }),
 }))

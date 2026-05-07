@@ -10,7 +10,6 @@ interface FlightStore {
   pollInterval: number
   filters: Filters
   filteredAircraft: Aircraft[]
-
   setAircraft: (aircraft: Aircraft[]) => void
   selectAircraft: (icao24: string | null) => void
   setConnectionStatus: (status: ConnectionStatus) => void
@@ -29,7 +28,7 @@ const DEFAULT_FILTERS: Filters = {
 }
 
 function applyFilters(aircraft: Aircraft[], filters: Filters): Aircraft[] {
-  return aircraft.filter((a: Aircraft) => {
+  return aircraft.filter((a) => {
     if (filters.onGround !== null && a.on_ground !== filters.onGround) return false
     if (filters.minAltitude !== null && (a.baro_altitude ?? 0) < filters.minAltitude) return false
     if (filters.maxAltitude !== null && (a.baro_altitude ?? 0) > filters.maxAltitude) return false
@@ -50,24 +49,21 @@ export const useFlightStore = create<FlightStore>((set, get) => ({
   filters: DEFAULT_FILTERS,
   filteredAircraft: [],
 
-  setAircraft: (aircraftList: Aircraft[]) => {
+  setAircraft: (aircraftList) => {
     const map = new Map<string, Aircraft>()
-    aircraftList.forEach((a: Aircraft) => map.set(a.icao24, a))
+    aircraftList.forEach((a) => map.set(a.icao24, a))
     const filtered = applyFilters(aircraftList, get().filters)
     set({ aircraft: map, filteredAircraft: filtered, lastUpdate: Date.now() })
   },
 
-  selectAircraft: (icao24: string | null) => set({ selectedIcao: icao24 }),
+  selectAircraft: (icao24) => set({ selectedIcao: icao24 }),
+  setConnectionStatus: (status) => set({ connectionStatus: status }),
+  setStats: (stats) => set({ stats, pollInterval: stats.poll_interval_seconds }),
 
-  setConnectionStatus: (status: ConnectionStatus) => set({ connectionStatus: status }),
-
-  setStats: (stats: GlobalStats) => set({ stats, pollInterval: stats.poll_interval_seconds }),
-
-  updateFilters: (partial: Partial<Filters>) => {
+  updateFilters: (partial) => {
     const filters = { ...get().filters, ...partial }
     const aircraftList = Array.from(get().aircraft.values())
-    const filtered = applyFilters(aircraftList, filters)
-    set({ filters, filteredAircraft: filtered })
+    set({ filters, filteredAircraft: applyFilters(aircraftList, filters) })
   },
 
   resetFilters: () => {

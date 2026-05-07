@@ -28,29 +28,29 @@ export const usePanelStore = create<PanelStore>((set) => ({
     filters:      makePanel('filters', false),
   },
 
-  togglePanel: (id: PanelId) =>
-    set((state: PanelStore) => ({
+  togglePanel: (id) =>
+    set((state) => ({
       panels: {
         ...state.panels,
         [id]: { ...state.panels[id], open: !state.panels[id].open, minimized: false },
       },
     })),
 
-  openPanel: (id: PanelId) =>
-    set((state: PanelStore) => ({
+  openPanel: (id) =>
+    set((state) => ({
       panels: {
         ...state.panels,
         [id]: { ...state.panels[id], open: true, minimized: false },
       },
     })),
 
-  movePanel: (id: PanelId, position: { x: number; y: number }) =>
-    set((state: PanelStore) => ({
+  movePanel: (id, position) =>
+    set((state) => ({
       panels: { ...state.panels, [id]: { ...state.panels[id], position } },
     })),
 
-  minimizePanel: (id: PanelId) =>
-    set((state: PanelStore) => ({
+  minimizePanel: (id) =>
+    set((state) => ({
       panels: {
         ...state.panels,
         [id]: { ...state.panels[id], minimized: !state.panels[id].minimized },

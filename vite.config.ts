@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
-import path from 'path'
 
 const cesiumSource = 'node_modules/cesium/Build/Cesium'
 const cesiumBaseUrl = 'cesiumStatic'
@@ -23,13 +22,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'https://api.flyskytrack.com',
-        changeOrigin: true,
-        secure: true,
-      },
-    },
   },
   build: {
     chunkSizeWarningLimit: 5000,
