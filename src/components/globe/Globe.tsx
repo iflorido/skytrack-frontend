@@ -14,16 +14,17 @@ const PLANE_SVG = `data:image/svg+xml;base64,${btoa(`
 </svg>
 `)}`
 
+// Carto Dark Matter — gratuito, sin token, estilo oscuro NASA-like
+const DARK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+const LIGHT_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+
 function createImageryProvider(dark: boolean) {
   return new Cesium.UrlTemplateImageryProvider({
-    url: dark
-      ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: dark ? DARK_TILE_URL : LIGHT_TILE_URL,
+    subdomains: dark ? ['a', 'b', 'c', 'd'] : [],
     minimumLevel: 0,
     maximumLevel: 19,
-    credit: dark
-      ? '© CartoDB © OpenStreetMap contributors'
-      : '© OpenStreetMap contributors',
+    credit: dark ? '© CartoDB © OpenStreetMap contributors' : '© OpenStreetMap contributors',
   })
 }
 
