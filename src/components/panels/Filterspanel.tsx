@@ -101,7 +101,7 @@ export default function FiltersPanel() {
             border border-[var(--border)] rounded-md text-[var(--text-dim)]
             hover:border-[var(--danger)] hover:text-[var(--danger)] transition-colors"
         >
-          <X size={12} /> Limpiar filtros.
+          <X size={12} /> Limpiar filtros
         </button>
       </div>
     </DraggablePanel>

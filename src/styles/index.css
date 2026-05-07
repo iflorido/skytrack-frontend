@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ── Variables de tema ────────────────────────────────────────────── */
 :root {
@@ -34,9 +34,7 @@
 }
 
 /* ── Base ─────────────────────────────────────────────────────────── */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html, body, #root {
   margin: 0;
@@ -49,7 +47,7 @@ html, body, #root {
   font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* ── Scrollbar personalizado ──────────────────────────────────────── */
+/* ── Scrollbar ────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -71,35 +69,23 @@ html, body, #root {
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.08), 0 4px 24px rgba(0,0,0,0.6);
 }
 
-.light .panel {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-}
+/* ── Texto monoespaciado ──────────────────────────────────────────── */
+.mono { font-family: 'JetBrains Mono', monospace; }
 
-/* ── Texto monoespaciado para datos ───────────────────────────────── */
-.mono {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* ── Indicador de estado parpadeante ──────────────────────────────── */
+/* ── Indicador de estado ──────────────────────────────────────────── */
 .status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   display: inline-block;
 }
-
-.status-dot.connected {
-  background: var(--success);
-  box-shadow: 0 0 6px var(--success);
-  animation: pulse-dot 2s infinite;
-}
-
+.status-dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse-dot 2s infinite; }
 .status-dot.disconnected { background: var(--danger); }
-.status-dot.connecting   { background: var(--warning); animation: pulse-dot 1s infinite; }
+.status-dot.connecting { background: var(--warning); animation: pulse-dot 1s infinite; }
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50% { opacity: 0.4; }
 }
 
 /* ── Barra de título de panel ─────────────────────────────────────── */
@@ -112,7 +98,6 @@ html, body, #root {
   cursor: grab;
   user-select: none;
 }
-
 .panel-header:active { cursor: grabbing; }
 
 /* ── Botón icon ───────────────────────────────────────────────────── */
@@ -129,24 +114,15 @@ html, body, #root {
   cursor: pointer;
   transition: all 0.15s;
 }
+.icon-btn:hover { background: var(--border); color: var(--text); }
 
-.icon-btn:hover {
-  background: var(--border);
-  color: var(--text);
-}
-
-/* ── Cesium container ─────────────────────────────────────────────── */
-.cesium-container {
-  position: absolute;
-  inset: 0;
-}
-
-/* Ocultar UI innecesaria de Cesium */
+/* ── Cesium ───────────────────────────────────────────────────────── */
+.cesium-container { position: absolute; inset: 0; }
 .cesium-widget-credits,
 .cesium-credit-logoContainer,
 .cesium-credit-textContainer { display: none !important; }
 
-/* ── NASA scan line effect (sutil) ───────────────────────────────── */
+/* ── NASA scan lines ──────────────────────────────────────────────── */
 .dark .scan-overlay {
   position: fixed;
   inset: 0;
@@ -163,8 +139,6 @@ html, body, #root {
 
 /* ── Responsive móvil ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-
-  /* Paneles a pantalla completa en móvil */
   .panel {
     position: fixed !important;
     left: 0 !important;
@@ -178,31 +152,12 @@ html, body, #root {
     overflow-y: auto;
     z-index: 200 !important;
   }
-
-  /* En móvil no se puede arrastrar — ocultar icono de drag */
-  .panel-header .grip-icon {
-    display: none;
-  }
-
-  /* Navbar más compacta */
   header {
     height: 48px !important;
     padding: 0 12px !important;
   }
-
-  /* Botones de panel en navbar — solo icono en móvil */
-  header span.hidden {
-    display: none !important;
-  }
-
-  /* El globo ocupa toda la pantalla */
-  .cesium-container {
-    top: 48px !important;
-  }
 }
 
 @media (max-width: 480px) {
-  .panel {
-    max-height: 70vh;
-  }
+  .panel { max-height: 70vh; }
 }
