@@ -7,25 +7,21 @@ import { Aircraft } from '../../types'
 
 Cesium.Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN || ''
 
-// Icono avión — blanco para tema oscuro, negro para tema claro
-function getPlaneSvg(dark: boolean) {
-  const color = dark ? 'white' : '#1a202c'
-  const stroke = dark ? 'rgba(0,212,255,0.6)' : 'rgba(0,80,200,0.5)'
+// SVG de avión con color dinámico
+function getPlaneSvg(color: string) {
   return `data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <path fill="${color}" stroke="${stroke}" stroke-width="1"
-    d="M16 2 L20 14 L30 16 L20 18 L18 28 L16 26 L14 28 L12 18 L2 16 L12 14 Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+  <path fill="${color}" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
 </svg>
 `)}`
 }
 
-function getSelectedPlaneSvg() {
-  return `data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <path fill="#00ffcc" stroke="#00ffcc" stroke-width="1.5"
-    d="M16 2 L20 14 L30 16 L20 18 L18 28 L16 26 L14 28 L12 18 L2 16 L12 14 Z"/>
-</svg>
-`)}`
+function getAircraftSvgColor(aircraft: Aircraft, selected: boolean, dark: boolean): string {
+  if (selected) return '#00ffcc'
+  if (aircraft.on_ground) return dark ? '#4a6080' : '#999999'
+  if (aircraft.is_climbing) return dark ? '#00d4ff' : '#0066cc'
+  if (aircraft.is_descending) return dark ? '#ffaa00' : '#cc6600'
+  return dark ? '#ffffff' : '#333333'
 }
 
 function createImageryProvider(dark: boolean) {
@@ -126,8 +122,9 @@ export default function Globe() {
     viewer.imageryLayers.add(new Cesium.ImageryLayer(createImageryProvider(isDark)))
     // Actualizar color de todos los billboards existentes
     icaoToBillboard.current.forEach((bb, icao) => {
-      if (icao !== selectedIcao) {
-        bb.image = getPlaneSvg(isDark)
+      const ac = useFlightStore.getState().aircraft.get(icao)
+      if (ac) {
+        bb.image = getPlaneSvg(getAircraftSvgColor(ac, icao === selectedIcao, isDark))
       }
     })
   }, [isDark, selectedIcao])
@@ -152,8 +149,9 @@ export default function Globe() {
         (aircraft.baro_altitude ?? 0) + 1000
       )
       const rotation = Cesium.Math.toRadians(aircraft.true_track ?? 0)
-      const scale = isSelected ? 1.6 : 1.1  // más grandes
-      const image = isSelected ? getSelectedPlaneSvg() : getPlaneSvg(isDark)
+      const scale = isSelected ? 1.4 : 1.0
+      const color = getAircraftSvgColor(aircraft, isSelected, isDark)
+      const image = getPlaneSvg(color)
 
       const existing = icaoToBillboard.current.get(icao)
       if (existing) {
