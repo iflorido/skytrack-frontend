@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  skytrack-frontend:
+    build: .
+    container_name: skytrack-frontend
+    restart: unless-stopped
+    ports:
+      - "5077:5077"
