@@ -6,14 +6,16 @@ const WS_URL = import.meta.env.VITE_WS_URL || 'wss://api.flyskytrack.com/api/v1/
 const RECONNECT_DELAY_MS = 3000
 const MAX_RECONNECT_DELAY_MS = 30000
 
+type WsMessage = LiveStateResponse & { type?: string }
+
 export function useWebSocket() {
   const ws = useRef<WebSocket | null>(null)
   const reconnectTimeout = useRef<ReturnType<typeof setTimeout>>()
   const reconnectDelay = useRef(RECONNECT_DELAY_MS)
   const mounted = useRef(true)
 
-  const setAircraft = useFlightStore(s => s.setAircraft)
-  const setConnectionStatus = useFlightStore(s => s.setConnectionStatus)
+  const setAircraft = useFlightStore((s) => s.setAircraft)
+  const setConnectionStatus = useFlightStore((s) => s.setConnectionStatus)
 
   const connect = useCallback(() => {
     if (!mounted.current) return
@@ -30,11 +32,11 @@ export function useWebSocket() {
         reconnectDelay.current = RECONNECT_DELAY_MS
       }
 
-      socket.onmessage = (event) => {
+      socket.onmessage = (event: MessageEvent) => {
         if (!mounted.current) return
         try {
-          const data = JSON.parse(event.data) as LiveStateResponse
-          if (data.type === 'ping') return  // ignorar heartbeats
+          const data = JSON.parse(event.data as string) as WsMessage
+          if (data.type === 'ping') return
           if (data.states) {
             setAircraft(data.states)
           }
@@ -47,7 +49,6 @@ export function useWebSocket() {
         if (!mounted.current) return
         setConnectionStatus('disconnected')
         ws.current = null
-        // Reconexión con backoff exponencial
         reconnectTimeout.current = setTimeout(() => {
           reconnectDelay.current = Math.min(
             reconnectDelay.current * 1.5,
@@ -74,7 +75,7 @@ export function useWebSocket() {
       mounted.current = false
       clearTimeout(reconnectTimeout.current)
       if (ws.current) {
-        ws.current.onclose = null  // evitar reconexión en desmontaje
+        ws.current.onclose = null
         ws.current.close()
       }
     }

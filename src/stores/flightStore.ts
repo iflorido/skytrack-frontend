@@ -2,21 +2,15 @@ import { create } from 'zustand'
 import { Aircraft, ConnectionStatus, Filters, GlobalStats } from '../types'
 
 interface FlightStore {
-  // Datos
   aircraft: Map<string, Aircraft>
   selectedIcao: string | null
   lastUpdate: number | null
   stats: GlobalStats | null
-
-  // Conexión
   connectionStatus: ConnectionStatus
   pollInterval: number
-
-  // Filtros
   filters: Filters
   filteredAircraft: Aircraft[]
 
-  // Acciones
   setAircraft: (aircraft: Aircraft[]) => void
   selectAircraft: (icao24: string | null) => void
   setConnectionStatus: (status: ConnectionStatus) => void
@@ -35,7 +29,7 @@ const DEFAULT_FILTERS: Filters = {
 }
 
 function applyFilters(aircraft: Aircraft[], filters: Filters): Aircraft[] {
-  return aircraft.filter(a => {
+  return aircraft.filter((a: Aircraft) => {
     if (filters.onGround !== null && a.on_ground !== filters.onGround) return false
     if (filters.minAltitude !== null && (a.baro_altitude ?? 0) < filters.minAltitude) return false
     if (filters.maxAltitude !== null && (a.baro_altitude ?? 0) > filters.maxAltitude) return false
@@ -56,20 +50,20 @@ export const useFlightStore = create<FlightStore>((set, get) => ({
   filters: DEFAULT_FILTERS,
   filteredAircraft: [],
 
-  setAircraft: (aircraftList) => {
+  setAircraft: (aircraftList: Aircraft[]) => {
     const map = new Map<string, Aircraft>()
-    aircraftList.forEach(a => map.set(a.icao24, a))
+    aircraftList.forEach((a: Aircraft) => map.set(a.icao24, a))
     const filtered = applyFilters(aircraftList, get().filters)
     set({ aircraft: map, filteredAircraft: filtered, lastUpdate: Date.now() })
   },
 
-  selectAircraft: (icao24) => set({ selectedIcao: icao24 }),
+  selectAircraft: (icao24: string | null) => set({ selectedIcao: icao24 }),
 
-  setConnectionStatus: (status) => set({ connectionStatus: status }),
+  setConnectionStatus: (status: ConnectionStatus) => set({ connectionStatus: status }),
 
-  setStats: (stats) => set({ stats, pollInterval: stats.poll_interval_seconds }),
+  setStats: (stats: GlobalStats) => set({ stats, pollInterval: stats.poll_interval_seconds }),
 
-  updateFilters: (partial) => {
+  updateFilters: (partial: Partial<Filters>) => {
     const filters = { ...get().filters, ...partial }
     const aircraftList = Array.from(get().aircraft.values())
     const filtered = applyFilters(aircraftList, filters)
