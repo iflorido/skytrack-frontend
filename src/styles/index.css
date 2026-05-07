@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Variables de tema ────────────────────────────────────────────── */
+:root {
+  --bg:          #f0f4f8;
+  --surface:     #ffffff;
+  --panel:       #f8fafc;
+  --border:      #e2e8f0;
+  --text:        #1a202c;
+  --text-dim:    #718096;
+  --accent:      #0080ff;
+  --accent-2:    #00aaff;
+  --success:     #38a169;
+  --warning:     #dd6b20;
+  --danger:      #e53e3e;
+}
+
+.dark {
+  --bg:          #050d1a;
+  --surface:     #0a1628;
+  --panel:       #0d1f3c;
+  --border:      #1a3a5c;
+  --text:        #c8e6ff;
+  --text-dim:    #6a9bbf;
+  --accent:      #00d4ff;
+  --accent-2:    #0080ff;
+  --success:     #00ff88;
+  --warning:     #ffaa00;
+  --danger:      #ff4444;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* ── Scrollbar personalizado ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Panel flotante base ──────────────────────────────────────────── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  position: absolute;
+  z-index: 100;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.dark .panel {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.08), 0 4px 24px rgba(0,0,0,0.6);
+}
+
+.light .panel {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+
+/* ── Texto monoespaciado para datos ───────────────────────────────── */
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Indicador de estado parpadeante ──────────────────────────────── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.connected {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: pulse-dot 2s infinite;
+}
+
+.status-dot.disconnected { background: var(--danger); }
+.status-dot.connecting   { background: var(--warning); animation: pulse-dot 1s infinite; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Barra de título de panel ─────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: grab;
+  user-select: none;
+}
+
+.panel-header:active { cursor: grabbing; }
+
+/* ── Botón icon ───────────────────────────────────────────────────── */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.icon-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ── Cesium container ─────────────────────────────────────────────── */
+.cesium-container {
+  position: absolute;
+  inset: 0;
+}
+
+/* Ocultar UI innecesaria de Cesium */
+.cesium-widget-credits,
+.cesium-credit-logoContainer,
+.cesium-credit-textContainer { display: none !important; }
+
+/* ── NASA scan line effect (sutil) ───────────────────────────────── */
+.dark .scan-overlay {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 212, 255, 0.01) 2px,
+    rgba(0, 212, 255, 0.01) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
