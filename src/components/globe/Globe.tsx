@@ -14,17 +14,22 @@ const PLANE_SVG = `data:image/svg+xml;base64,${btoa(`
 </svg>
 `)}`
 
-// Carto Dark Matter — gratuito, sin token, estilo oscuro NASA-like
-const DARK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
 const LIGHT_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 function createImageryProvider(dark: boolean) {
+  if (dark) {
+    return new Cesium.UrlTemplateImageryProvider({
+      url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png',
+      minimumLevel: 0,
+      maximumLevel: 20,
+      credit: '© Stadia Maps © OpenMapTiles © OpenStreetMap contributors',
+    })
+  }
   return new Cesium.UrlTemplateImageryProvider({
-    url: dark ? DARK_TILE_URL : LIGHT_TILE_URL,
-    subdomains: dark ? ['a', 'b', 'c', 'd'] : [],
+    url: LIGHT_TILE_URL,
     minimumLevel: 0,
     maximumLevel: 19,
-    credit: dark ? '© CartoDB © OpenStreetMap contributors' : '© OpenStreetMap contributors',
+    credit: '© OpenStreetMap contributors',
   })
 }
 
