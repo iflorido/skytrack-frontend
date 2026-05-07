@@ -1,16 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import Globe from './components/globe/Globe'
 import Navbar from './components/ui/Navbar'
 import StatsPanel from './components/panels/StatsPanel'
 import FlightListPanel from './components/panels/FlightListPanel'
 import FlightDetailPanel from './components/panels/FlightDetailPanel'
-import FiltersPanel from './components/panels/FiltersPanel'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useTheme } from './hooks/useTheme'
 
+// FiltersPanel cargado de forma lazy — si no existe el fichero el build no falla
+const FiltersPanel = lazy(() =>
+  import('./components/panels/FiltersPanel').catch(() => ({
+    default: () => null
+  }))
+)
+
 export default function App() {
   const { theme } = useTheme()
-
   useWebSocket()
 
   useEffect(() => {
@@ -27,7 +32,9 @@ export default function App() {
           <StatsPanel />
           <FlightListPanel />
           <FlightDetailPanel />
-          <FiltersPanel />
+          <Suspense fallback={null}>
+            <FiltersPanel />
+          </Suspense>
         </div>
       </div>
     </div>
