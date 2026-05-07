@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copiar dependencias primero para aprovechar cache
 COPY package*.json ./
-RUN npm ci --prefer-offline
+RUN npm install
 
 # Copiar código fuente
 COPY . .
