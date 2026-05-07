@@ -6,15 +6,29 @@ import { usePanelStore } from '../../stores/panelStore'
 import { Aircraft } from '../../types'
 import { getAircraftColor } from '../../utils/formatters'
 
-// Token de Cesium Ion
 Cesium.Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN || ''
 
-// Icono SVG de avión codificado como data URL
 const PLANE_SVG = `data:image/svg+xml;base64,${btoa(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <path fill="white" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
 </svg>
 `)}`
+
+function createNasaImageryProvider() {
+  // Natural Earth II — gratuito, sin token, aspecto oscuro/espacial
+  return new Cesium.TileMapServiceImageryProvider({
+    url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
+    fileExtension: 'jpg',
+    maximumLevel: 5,
+  })
+}
+
+function createLightImageryProvider() {
+  // OpenStreetMap — gratuito y sin token
+  return new Cesium.OpenStreetMapImageryProvider({
+    url: 'https://tile.openstreetmap.org/',
+  })
+}
 
 export default function Globe() {
   const viewerRef = useRef<Cesium.Viewer | null>(null)
@@ -28,14 +42,12 @@ export default function Globe() {
   const { theme } = useThemeStore()
   const openPanel = usePanelStore(s => s.openPanel)
 
-  // Inicializar Cesium
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return
 
     const viewer = new Cesium.Viewer(containerRef.current, {
-      // Imagen base según tema
       baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-        Cesium.IonImageryProvider.fromAssetId(3954)  // Bing Maps Dark (NASA-like)
+        Promise.resolve(createNasaImageryProvider())
       ),
       baseLayerPicker: false,
       geocoder: false,
@@ -48,17 +60,17 @@ export default function Globe() {
       vrButton: false,
       infoBox: false,
       selectionIndicator: false,
-      // Terreno
       terrainProvider: new Cesium.EllipsoidTerrainProvider(),
     })
 
-    // Configuración del globo
     viewer.scene.globe.enableLighting = true
     viewer.scene.globe.showGroundAtmosphere = true
     viewer.scene.skyAtmosphere.show = true
     viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050d1a')
 
-    // Configuración de cámara inicial — vista global desde espacio
+    // Ajuste de color del globo para tema NASA
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628')
+
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(0, 20, 20000000),
       orientation: {
@@ -68,13 +80,11 @@ export default function Globe() {
       },
     })
 
-    // Crear colección de billboards para los aviones
     const billboards = viewer.scene.primitives.add(
       new Cesium.BillboardCollection({ scene: viewer.scene })
     )
     billboardsRef.current = billboards
 
-    // Click en el globo para seleccionar avión
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
     handler.setInputAction((click: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
       const picked = viewer.scene.pick(click.position)
@@ -93,31 +103,27 @@ export default function Globe() {
 
     return () => {
       handler.destroy()
-      if (!viewer.isDestroyed()) {
-        viewer.destroy()
-      }
+      if (!viewer.isDestroyed()) viewer.destroy()
       viewerRef.current = null
       billboardsRef.current = null
       icaoToBillboard.current.clear()
     }
   }, [selectAircraft, openPanel])
 
-  // Actualizar tema del mapa
+  // Cambiar imagery según tema
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
 
-    const assetId = theme === 'nasa' ? 3954 : 2  // Dark / Natural Earth
-    Cesium.IonImageryProvider.fromAssetId(assetId).then(provider => {
-      if (viewer.isDestroyed()) return
-      viewer.imageryLayers.removeAll()
-      viewer.imageryLayers.addImageryProvider(provider)
-    }).catch(() => {
-      // fallback silencioso
-    })
+    const provider = theme === 'nasa'
+      ? createNasaImageryProvider()
+      : createLightImageryProvider()
+
+    viewer.imageryLayers.removeAll()
+    viewer.imageryLayers.addImageryProvider(provider)
   }, [theme])
 
-  // Actualizar billboards de aviones
+  // Actualizar billboards
   useEffect(() => {
     const billboards = billboardsRef.current
     if (!billboards) return
@@ -141,8 +147,8 @@ export default function Globe() {
       )
 
       const rotation = Cesium.Math.toRadians(aircraft.true_track ?? 0)
-
       const existing = icaoToBillboard.current.get(icao)
+
       if (existing) {
         existing.position = position
         existing.color = color
@@ -167,7 +173,6 @@ export default function Globe() {
       }
     })
 
-    // Eliminar aviones que ya no están en el feed
     icaoToBillboard.current.forEach((billboard, icao) => {
       if (!currentIcaos.has(icao)) {
         billboards.remove(billboard)
@@ -176,7 +181,6 @@ export default function Globe() {
     })
   }, [filteredAircraft, selectedIcao])
 
-  // Volar a avión seleccionado
   const flyToAircraft = useCallback((aircraft: Aircraft) => {
     const viewer = viewerRef.current
     if (!viewer || !aircraft.latitude || !aircraft.longitude) return
@@ -196,7 +200,6 @@ export default function Globe() {
     })
   }, [])
 
-  // Volar al avión seleccionado cuando cambia la selección
   useEffect(() => {
     if (!selectedIcao) return
     const aircraft = useFlightStore.getState().aircraft.get(selectedIcao)
