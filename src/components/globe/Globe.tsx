@@ -4,15 +4,29 @@ import { useFlightStore } from '../../stores/flightStore'
 import { useThemeStore } from '../../stores/themeStore'
 import { usePanelStore } from '../../stores/panelStore'
 import { Aircraft } from '../../types'
-import { getAircraftColor } from '../../utils/formatters'
 
 Cesium.Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_TOKEN || ''
 
-const PLANE_SVG = `data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <path fill="white" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+// Icono avión — blanco para tema oscuro, negro para tema claro
+function getPlaneSvg(dark: boolean) {
+  const color = dark ? 'white' : '#1a202c'
+  const stroke = dark ? 'rgba(0,212,255,0.6)' : 'rgba(0,80,200,0.5)'
+  return `data:image/svg+xml;base64,${btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path fill="${color}" stroke="${stroke}" stroke-width="1"
+    d="M16 2 L20 14 L30 16 L20 18 L18 28 L16 26 L14 28 L12 18 L2 16 L12 14 Z"/>
 </svg>
 `)}`
+}
+
+function getSelectedPlaneSvg() {
+  return `data:image/svg+xml;base64,${btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <path fill="#00ffcc" stroke="#00ffcc" stroke-width="1.5"
+    d="M16 2 L20 14 L30 16 L20 18 L18 28 L16 26 L14 28 L12 18 L2 16 L12 14 Z"/>
+</svg>
+`)}`
+}
 
 function createImageryProvider(dark: boolean) {
   return new Cesium.UrlTemplateImageryProvider({
@@ -32,12 +46,15 @@ export default function Globe() {
   const containerRef = useRef<HTMLDivElement>(null)
   const billboardsRef = useRef<Cesium.BillboardCollection | null>(null)
   const icaoToBillboard = useRef<Map<string, Cesium.Billboard>>(new Map())
+  const trackPolylineRef = useRef<Cesium.Primitive | null>(null)
 
   const filteredAircraft = useFlightStore(s => s.filteredAircraft)
   const selectedIcao = useFlightStore(s => s.selectedIcao)
   const selectAircraft = useFlightStore(s => s.selectAircraft)
   const { theme } = useThemeStore()
   const openPanel = usePanelStore(s => s.openPanel)
+
+  const isDark = theme === 'nasa'
 
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return
@@ -57,11 +74,8 @@ export default function Globe() {
       terrainProvider: new Cesium.EllipsoidTerrainProvider(),
     })
 
-    // Añadir imagery base usando la API correcta de Cesium 1.122
     viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.add(
-      new Cesium.ImageryLayer(createImageryProvider(true))
-    )
+    viewer.imageryLayers.add(new Cesium.ImageryLayer(createImageryProvider(true)))
 
     viewer.scene.globe.enableLighting = false
     viewer.scene.globe.showGroundAtmosphere = true
@@ -71,11 +85,7 @@ export default function Globe() {
 
     viewer.camera.setView({
       destination: Cesium.Cartesian3.fromDegrees(0, 20, 20000000),
-      orientation: {
-        heading: 0,
-        pitch: -Cesium.Math.PI_OVER_TWO,
-        roll: 0,
-      },
+      orientation: { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 },
     })
 
     const billboards = viewer.scene.primitives.add(
@@ -108,15 +118,21 @@ export default function Globe() {
     }
   }, [selectAircraft, openPanel])
 
+  // Cambiar mapa según tema
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
     viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.add(
-      new Cesium.ImageryLayer(createImageryProvider(theme === 'nasa'))
-    )
-  }, [theme])
+    viewer.imageryLayers.add(new Cesium.ImageryLayer(createImageryProvider(isDark)))
+    // Actualizar color de todos los billboards existentes
+    icaoToBillboard.current.forEach((bb, icao) => {
+      if (icao !== selectedIcao) {
+        bb.image = getPlaneSvg(isDark)
+      }
+    })
+  }, [isDark, selectedIcao])
 
+  // Actualizar billboards
   useEffect(() => {
     const billboards = billboardsRef.current
     if (!billboards) return
@@ -128,37 +144,36 @@ export default function Globe() {
 
       const icao = aircraft.icao24
       currentIcaos.add(icao)
+      const isSelected = icao === selectedIcao
 
       const position = Cesium.Cartesian3.fromDegrees(
         aircraft.longitude,
         aircraft.latitude,
         (aircraft.baro_altitude ?? 0) + 1000
       )
-      const color = Cesium.Color.fromCssColorString(
-        getAircraftColor(aircraft, icao === selectedIcao)
-      )
       const rotation = Cesium.Math.toRadians(aircraft.true_track ?? 0)
-      const existing = icaoToBillboard.current.get(icao)
+      const scale = isSelected ? 1.6 : 1.1  // más grandes
+      const image = isSelected ? getSelectedPlaneSvg() : getPlaneSvg(isDark)
 
+      const existing = icaoToBillboard.current.get(icao)
       if (existing) {
         existing.position = position
-        existing.color = color
+        existing.image = image
         existing.rotation = -rotation
-        existing.scale = icao === selectedIcao ? 1.4 : 0.8
+        existing.scale = scale
       } else {
         const billboard = billboards.add({
           id: icao,
           position,
-          image: PLANE_SVG,
-          color,
+          image,
           rotation: -rotation,
-          scale: 0.8,
+          scale,
           verticalOrigin: Cesium.VerticalOrigin.CENTER,
           horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
           pixelOffset: Cesium.Cartesian2.ZERO,
           eyeOffset: Cesium.Cartesian3.ZERO,
-          scaleByDistance: new Cesium.NearFarScalar(1e4, 1.2, 1e7, 0.4),
-          translucencyByDistance: new Cesium.NearFarScalar(1e7, 1.0, 2e7, 0.2),
+          scaleByDistance: new Cesium.NearFarScalar(1e4, 1.5, 1e7, 0.6),
+          translucencyByDistance: new Cesium.NearFarScalar(1e7, 1.0, 2e7, 0.3),
         })
         icaoToBillboard.current.set(icao, billboard)
       }
@@ -170,7 +185,28 @@ export default function Globe() {
         icaoToBillboard.current.delete(icao)
       }
     })
-  }, [filteredAircraft, selectedIcao])
+  }, [filteredAircraft, selectedIcao, isDark])
+
+  // Trazar ruta del avión seleccionado desde los datos del store
+  useEffect(() => {
+    const viewer = viewerRef.current
+    if (!viewer) return
+
+    // Eliminar traza anterior
+    if (trackPolylineRef.current) {
+      viewer.scene.primitives.remove(trackPolylineRef.current)
+      trackPolylineRef.current = null
+    }
+
+    if (!selectedIcao) return
+
+    // Obtener posiciones históricas del store (últimas N posiciones)
+    const aircraft = useFlightStore.getState().aircraft.get(selectedIcao)
+    if (!aircraft || !aircraft.latitude || !aircraft.longitude) return
+
+    // Por ahora mostramos solo la posición actual como punto destacado
+    // La trayectoria completa se carga desde la API en FlightDetailPanel
+  }, [selectedIcao])
 
   const flyToAircraft = useCallback((aircraft: Aircraft) => {
     const viewer = viewerRef.current
@@ -179,14 +215,10 @@ export default function Globe() {
       destination: Cesium.Cartesian3.fromDegrees(
         aircraft.longitude,
         aircraft.latitude,
-        500000
+        800000
       ),
       duration: 2,
-      orientation: {
-        heading: 0,
-        pitch: -Cesium.Math.PI_OVER_TWO,
-        roll: 0,
-      },
+      orientation: { heading: 0, pitch: -Cesium.Math.PI_OVER_TWO, roll: 0 },
     })
   }, [])
 
