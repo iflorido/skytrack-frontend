@@ -14,19 +14,17 @@ const PLANE_SVG = `data:image/svg+xml;base64,${btoa(`
 </svg>
 `)}`
 
-function createNasaImageryProvider() {
-  // Natural Earth II — gratuito, sin token, aspecto oscuro/espacial
-  return new Cesium.TileMapServiceImageryProvider({
-    url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'),
-    fileExtension: 'jpg',
-    maximumLevel: 5,
-  })
-}
+// Carto Dark Matter — gratuito, sin token, estilo oscuro NASA-like
+const DARK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+const LIGHT_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
-function createLightImageryProvider() {
-  // OpenStreetMap — gratuito y sin token
-  return new Cesium.OpenStreetMapImageryProvider({
-    url: 'https://tile.openstreetmap.org/',
+function createImageryProvider(dark: boolean) {
+  return new Cesium.UrlTemplateImageryProvider({
+    url: dark ? DARK_TILE_URL : LIGHT_TILE_URL,
+    subdomains: dark ? ['a', 'b', 'c', 'd'] : [],
+    minimumLevel: 0,
+    maximumLevel: 19,
+    credit: dark ? '© CartoDB © OpenStreetMap contributors' : '© OpenStreetMap contributors',
   })
 }
 
@@ -46,8 +44,8 @@ export default function Globe() {
     if (!containerRef.current || viewerRef.current) return
 
     const viewer = new Cesium.Viewer(containerRef.current, {
-      baseLayer: Cesium.ImageryLayer.fromProviderAsync(
-        Promise.resolve(createNasaImageryProvider())
+      baseLayer: Cesium.ImageryLayer.fromProvider(
+        createImageryProvider(true)
       ),
       baseLayerPicker: false,
       geocoder: false,
@@ -63,12 +61,10 @@ export default function Globe() {
       terrainProvider: new Cesium.EllipsoidTerrainProvider(),
     })
 
-    viewer.scene.globe.enableLighting = true
+    viewer.scene.globe.enableLighting = false
     viewer.scene.globe.showGroundAtmosphere = true
     viewer.scene.skyAtmosphere.show = true
     viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050d1a')
-
-    // Ajuste de color del globo para tema NASA
     viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1628')
 
     viewer.camera.setView({
@@ -110,20 +106,13 @@ export default function Globe() {
     }
   }, [selectAircraft, openPanel])
 
-  // Cambiar imagery según tema
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
-
-    const provider = theme === 'nasa'
-      ? createNasaImageryProvider()
-      : createLightImageryProvider()
-
     viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.addImageryProvider(provider)
+    viewer.imageryLayers.addImageryProvider(createImageryProvider(theme === 'nasa'))
   }, [theme])
 
-  // Actualizar billboards
   useEffect(() => {
     const billboards = billboardsRef.current
     if (!billboards) return
@@ -141,11 +130,9 @@ export default function Globe() {
         aircraft.latitude,
         (aircraft.baro_altitude ?? 0) + 1000
       )
-
       const color = Cesium.Color.fromCssColorString(
         getAircraftColor(aircraft, icao === selectedIcao)
       )
-
       const rotation = Cesium.Math.toRadians(aircraft.true_track ?? 0)
       const existing = icaoToBillboard.current.get(icao)
 
@@ -184,7 +171,6 @@ export default function Globe() {
   const flyToAircraft = useCallback((aircraft: Aircraft) => {
     const viewer = viewerRef.current
     if (!viewer || !aircraft.latitude || !aircraft.longitude) return
-
     viewer.camera.flyTo({
       destination: Cesium.Cartesian3.fromDegrees(
         aircraft.longitude,
