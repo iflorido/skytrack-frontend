@@ -4,6 +4,7 @@ import Navbar from './components/ui/Navbar'
 import StatsPanel from './components/panels/StatsPanel'
 import FlightListPanel from './components/panels/FlightListPanel'
 import FlightDetailPanel from './components/panels/FlightDetailPanel'
+import FiltersPanel from './components/panels/FiltersPanel'
 import { useWebSocket } from './hooks/useWebSocket'
 import { useTheme } from './hooks/useTheme'
 
@@ -25,6 +26,7 @@ export default function App() {
           <StatsPanel />
           <FlightListPanel />
           <FlightDetailPanel />
+          <FiltersPanel />
         </div>
       </div>
     </div>
