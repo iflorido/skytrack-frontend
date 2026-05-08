@@ -1,0 +1,45 @@
+# FlySkyTrack
+
+## Descripción
+FlySkyTrack es una aplicación web gratuita de seguimiento de vuelos en tiempo real. Muestra más de 12.000 aeronaves activas en todo el mundo sobre un globo 3D interactivo que permite navegar desde una vista esférica de la Tierra hasta un mapa plano detallado.
+
+## URL
+https://flyskytrack.com
+
+## Autor
+Ignacio Florido — https://iflorido.es
+
+## Funcionalidades principales
+- Globo 3D interactivo con transición esfera → mapa plano al hacer zoom
+- Posición en tiempo real de más de 12.000 aeronaves (actualización cada 150 segundos)
+- Información detallada por aeronave: callsign, ICAO24, país, altitud, velocidad, tasa vertical, squawk, fuente ADS-B
+- Trayectoria histórica de cada vuelo (últimas 6 horas)
+- Aeropuerto de origen y destino calculados desde base de datos OurAirports (74.000+ aeropuertos)
+- Filtros por estado (vuelo/tierra), callsign, país y altitud
+- Dos temas visuales: NASA Dark (azul oscuro estilo centro de control) y Light
+- Paneles flotantes arrastrables y minimizables
+- Compatible con dispositivos móviles
+
+## Fuente de datos
+- Posiciones en tiempo real: OpenSky Network (https://opensky-network.org) via API REST con autenticación OAuth2
+- Aeropuertos: OurAirports (https://ourairports.com) — actualización automática semanal
+- Protocolo: ADS-B (Automatic Dependent Surveillance-Broadcast), MLAT y FLARM
+
+## Stack tecnológico
+- Frontend: React 18, TypeScript, Vite, CesiumJS, Zustand, Framer Motion, Tailwind CSS
+- Backend: FastAPI (Python), PostgreSQL 16 + TimescaleDB, asyncpg
+- Despliegue: Docker, VPS Linux, Nginx
+- CI/CD: GitHub Actions → ghcr.io
+
+## API pública
+- Base URL: https://api.flyskytrack.com
+- Documentación: https://api.flyskytrack.com/docs
+- WebSocket en tiempo real: wss://api.flyskytrack.com/api/v1/states/live
+- Endpoints REST: /api/v1/states/current, /api/v1/flights/*, /api/v1/tracks/*
+
+## Restricciones
+- La API es de uso exclusivo de flyskytrack.com
+- Los datos de OpenSky Network están sujetos a sus términos de uso
+
+## Idioma principal
+Español (es-ES)
