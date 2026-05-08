@@ -1,6 +1,8 @@
+import LegalLayout from '../components/ui/LegalLayout'
+
 export default function Cookies() {
   return (
-    <div className="legal-page">
+    <LegalLayout><div className="legal-page" style={{ position: 'static' }}>
       <div className="legal-container">
         <h1>Política de Cookies</h1>
 
@@ -138,6 +140,6 @@ export default function Cookies() {
 
         <p className="legal-date">Última actualización: mayo de 2026</p>
       </div>
-    </div>
+    </div></LegalLayout>
   )
 }

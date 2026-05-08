@@ -1,6 +1,8 @@
+import LegalLayout from '../components/ui/LegalLayout'
+
 export default function Privacidad() {
   return (
-    <div className="legal-page">
+    <LegalLayout><div className="legal-page" style={{ position: 'static' }}>
       <div className="legal-container">
         <h1>Política de Privacidad</h1>
 
@@ -97,6 +99,6 @@ export default function Privacidad() {
 
         <p className="legal-date">Última actualización: mayo de 2026</p>
       </div>
-    </div>
+    </div></LegalLayout>
   )
 }

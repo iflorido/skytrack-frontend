@@ -1,8 +1,10 @@
 import { Mail, Globe, Github } from 'lucide-react'
 
+import LegalLayout from '../components/ui/LegalLayout'
+
 export default function Contacto() {
   return (
-    <div className="legal-page">
+    <LegalLayout><div className="legal-page" style={{ position: 'static' }}>
       <div className="legal-container">
         <h1>Contacto</h1>
 
@@ -50,6 +52,6 @@ export default function Contacto() {
           <a href="/privacidad">Política de Privacidad</a> para más información.
         </p>
       </div>
-    </div>
+    </div></LegalLayout>
   )
 }

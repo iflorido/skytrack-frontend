@@ -1,6 +1,8 @@
+import LegalLayout from '../components/ui/LegalLayout'
+
 export default function AvisoLegal() {
   return (
-    <div className="legal-page">
+    <LegalLayout><div className="legal-page" style={{ position: 'static' }}>
       <div className="legal-container">
         <h1>Aviso Legal</h1>
 
@@ -64,6 +66,6 @@ export default function AvisoLegal() {
 
         <p className="legal-date">Última actualización: mayo de 2026</p>
       </div>
-    </div>
+    </div></LegalLayout>
   )
 }
