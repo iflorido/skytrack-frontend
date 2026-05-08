@@ -73,10 +73,9 @@ export default function Globe() {
     viewer.imageryLayers.removeAll()
     // Mapa base con tinte azul NASA — alpha controla la intensidad del tinte
     const baseLayer = new Cesium.ImageryLayer(createImageryProvider(true))
-    baseLayer.alpha = 0.6  // ligeramente oscurecido
-    baseLayer.brightness = 0.5
-    baseLayer.hue = 0.6     // desplazamiento hacia azul
-    baseLayer.saturation = 0.8
+    baseLayer.brightness = 0.45
+    baseLayer.saturation = 0.4
+    baseLayer.hue = 0.0
     viewer.imageryLayers.add(baseLayer)
 
     viewer.scene.globe.enableLighting = false
@@ -125,25 +124,19 @@ export default function Globe() {
     const viewer = viewerRef.current
     if (!viewer) return
 
-    viewer.imageryLayers.removeAll()
-
-    const layer = new Cesium.ImageryLayer(createImageryProvider(isDark))
-
-    if (isDark) {
-      // Tema NASA — mapa con tinte azul oscuro
-      layer.alpha = 0.6
-      layer.brightness = 0.5
-      layer.hue = 0.6
-      layer.saturation = 0.8
-    } else {
-      // Tema claro — mapa normal sin modificaciones
-      layer.alpha = 1.0
-      layer.brightness = 1.0
-      layer.hue = 0.0
-      layer.saturation = 1.0
+    // Modificar la capa base existente sin recrearla (evita parpadeo)
+    if (viewer.imageryLayers.length > 0) {
+      const layer = viewer.imageryLayers.get(0)
+      if (isDark) {
+        layer.brightness = 0.45
+        layer.saturation = 0.4
+        layer.hue = 0.0
+      } else {
+        layer.brightness = 1.0
+        layer.saturation = 1.0
+        layer.hue = 0.0
+      }
     }
-
-    viewer.imageryLayers.add(layer)
 
     // Actualizar color de billboards
     icaoToBillboard.current.forEach((bb, icao) => {
