@@ -4,7 +4,7 @@ import LegalLayout from '../components/ui/LegalLayout'
 
 export default function Contacto() {
   return (
-    <LegalLayout><div className="legal-page" style={{ position: 'static' }}>
+    <LegalLayout>
       <div className="legal-container">
         <h1>Contacto</h1>
 
@@ -52,6 +52,6 @@ export default function Contacto() {
           <a href="/privacidad">Política de Privacidad</a> para más información.
         </p>
       </div>
-    </div></LegalLayout>
+    </LegalLayout>
   )
 }
