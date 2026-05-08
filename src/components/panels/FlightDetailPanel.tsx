@@ -10,11 +10,27 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.flyskytrack.com'
 
 interface FlightInfo {
+  // OpenSky data
   callsign: string | null
   estDepartureAirport: string | null
   estArrivalAirport: string | null
   firstSeen: number
   lastSeen: number
+}
+
+interface AviationInfo {
+  departure_icao: string | null
+  departure_iata: string | null
+  departure_airport: string | null
+  departure_scheduled: string | null
+  arrival_icao: string | null
+  arrival_iata: string | null
+  arrival_airport: string | null
+  arrival_scheduled: string | null
+  arrival_estimated: string | null
+  flight_iata: string | null
+  airline_name: string | null
+  flight_status: string | null
 }
 
 export interface TrackWaypoint {
@@ -46,6 +62,7 @@ export default function FlightDetailPanel() {
   const selectAircraft = useFlightStore(s => s.selectAircraft)
 
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null)
+  const [aviationInfo, setAviationInfo] = useState<AviationInfo | null>(null)
   const [trackData, setTrackData] = useState<TrackData | null>(null)
   const [loadingFlight, setLoadingFlight] = useState(false)
   const [loadingTrack, setLoadingTrack] = useState(false)
@@ -57,6 +74,7 @@ export default function FlightDetailPanel() {
   useEffect(() => {
     if (!selectedIcao || !a) {
       setFlightInfo(null)
+      setAviationInfo(null)
       setTrackData(null)
       trackDataCallback?.(null)
       return
@@ -81,6 +99,14 @@ export default function FlightDetailPanel() {
       })
       .catch(() => setFlightInfo(null))
       .finally(() => setLoadingFlight(false))
+
+    // Llamar a AviationStack con el callsign para datos enriquecidos
+    if (a.callsign?.trim()) {
+      fetch(`${API_URL}/api/v1/flights/info/${a.callsign.trim()}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => setAviationInfo(data))
+        .catch(() => setAviationInfo(null))
+    }
 
     // Cargar trayectoria histórica desde nuestra BD
     setLoadingTrack(true)
@@ -132,32 +158,45 @@ export default function FlightDetailPanel() {
           </div>
           {loadingFlight ? (
             <div className="text-xs text-[var(--text-dim)] text-center py-1 mono">Cargando...</div>
-          ) : flightInfo ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-center flex-1">
-                <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
-                  {flightInfo.estDepartureAirport || '????'}
+          ) : (aviationInfo || flightInfo) ? (() => {
+            const dep = aviationInfo?.departure_icao || aviationInfo?.departure_iata || flightInfo?.estDepartureAirport
+            const arr = aviationInfo?.arrival_icao || aviationInfo?.arrival_iata || flightInfo?.estArrivalAirport
+            const depName = aviationInfo?.departure_airport
+            const arrName = aviationInfo?.arrival_airport
+            const arrEst = aviationInfo?.arrival_estimated || aviationInfo?.arrival_scheduled
+            return (
+              <div>
+                {aviationInfo?.airline_name && (
+                  <div className="text-xs text-center text-[var(--accent)] mono mb-2">
+                    {aviationInfo.airline_name}
+                    {aviationInfo.flight_iata && <span className="text-[var(--text-dim)] ml-2">{aviationInfo.flight_iata}</span>}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-center flex-1">
+                    <div className="mono font-bold text-base" style={{ color: dep ? 'var(--text)' : 'var(--text-dim)' }}>
+                      {dep || '????'} 
+                    </div>
+                    {depName && <div className="text-[9px] text-[var(--text-dim)] truncate">{depName}</div>}
+                    <div className="text-[10px] text-[var(--text-dim)]">Origen</div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="h-px w-4 border-t border-dashed border-[var(--border)]" />
+                    <Navigation size={12} style={{ color: 'var(--accent)' }} />
+                    <div className="h-px w-4 border-t border-dashed border-[var(--border)]" />
+                  </div>
+                  <div className="text-center flex-1">
+                    <div className="mono font-bold text-base" style={{ color: arr ? 'var(--text)' : 'var(--text-dim)' }}>
+                      {arr || 'En vuelo'}
+                    </div>
+                    {arrName && <div className="text-[9px] text-[var(--text-dim)] truncate">{arrName}</div>}
+                    {arrEst && <div className="text-[9px] text-[var(--accent)] mono">{new Date(arrEst).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</div>}
+                    <div className="text-[10px] text-[var(--text-dim)]">{arr ? 'Destino' : 'Destino pendiente'}</div>
+                  </div>
                 </div>
-                <div className="text-[10px] text-[var(--text-dim)]">Origen</div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <div className="h-px w-6 border-t border-dashed border-[var(--border)]" />
-                <Navigation size={12} style={{ color: 'var(--accent)' }} />
-                <div className="h-px w-6 border-t border-dashed border-[var(--border)]" />
-              </div>
-              <div className="text-center flex-1">
-                <div
-                  className="mono font-bold text-base"
-                  style={{ color: flightInfo.estArrivalAirport ? 'var(--text)' : 'var(--text-dim)' }}
-                >
-                  {flightInfo.estArrivalAirport || 'En vuelo'}
-                </div>
-                <div className="text-[10px] text-[var(--text-dim)]">
-                  {flightInfo.estArrivalAirport ? 'Destino' : 'Destino pendiente'}
-                </div>
-              </div>
-            </div>
-          ) : (
+            )
+          })() : (
             <div className="text-xs text-[var(--text-dim)] text-center py-1">
               Sin datos de ruta disponibles
             </div>
