@@ -25,18 +25,17 @@ function getAircraftSvgColor(aircraft: Aircraft, selected: boolean, dark: boolea
   return dark ? '#ffffff' : '#333333'
 }
 
-function createImageryProvider(dark: boolean) {
+function createImageryProvider(_dark: boolean) {
+  // Mismo mapa base para ambos temas — CartoDB Voyager con buen detalle
   return new Cesium.UrlTemplateImageryProvider({
-    url: dark
-      ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
-      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
     minimumLevel: 0,
     maximumLevel: 19,
-    credit: dark
-      ? '© CartoDB © OpenStreetMap contributors'
-      : '© OpenStreetMap contributors',
+    credit: '© CartoDB © OpenStreetMap contributors',
   })
 }
+
+
 
 export default function Globe() {
   const viewerRef = useRef<Cesium.Viewer | null>(null)
@@ -72,7 +71,13 @@ export default function Globe() {
     })
 
     viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.add(new Cesium.ImageryLayer(createImageryProvider(true)))
+    // Mapa base con tinte azul NASA — alpha controla la intensidad del tinte
+    const baseLayer = new Cesium.ImageryLayer(createImageryProvider(true))
+    baseLayer.alpha = 0.6  // ligeramente oscurecido
+    baseLayer.brightness = 0.5
+    baseLayer.hue = 0.6     // desplazamiento hacia azul
+    baseLayer.saturation = 0.8
+    viewer.imageryLayers.add(baseLayer)
 
     viewer.scene.globe.enableLighting = false
     viewer.scene.globe.showGroundAtmosphere = true
@@ -119,9 +124,28 @@ export default function Globe() {
   useEffect(() => {
     const viewer = viewerRef.current
     if (!viewer) return
+
     viewer.imageryLayers.removeAll()
-    viewer.imageryLayers.add(new Cesium.ImageryLayer(createImageryProvider(isDark)))
-    // Actualizar color de todos los billboards existentes
+
+    const layer = new Cesium.ImageryLayer(createImageryProvider(isDark))
+
+    if (isDark) {
+      // Tema NASA — mapa con tinte azul oscuro
+      layer.alpha = 0.6
+      layer.brightness = 0.5
+      layer.hue = 0.6
+      layer.saturation = 0.8
+    } else {
+      // Tema claro — mapa normal sin modificaciones
+      layer.alpha = 1.0
+      layer.brightness = 1.0
+      layer.hue = 0.0
+      layer.saturation = 1.0
+    }
+
+    viewer.imageryLayers.add(layer)
+
+    // Actualizar color de billboards
     icaoToBillboard.current.forEach((bb, icao) => {
       const ac = useFlightStore.getState().aircraft.get(icao)
       if (ac) {
