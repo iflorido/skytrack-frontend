@@ -19,4 +19,5 @@ COPY --from=build /app/dist ./dist
 
 EXPOSE 5077
 
-CMD ["serve", "-s", "dist", "-l", "5077"]
+# --single activa el modo SPA: redirige todas las rutas a index.html
+CMD ["serve", "-s", "dist", "-l", "5077", "--single"]

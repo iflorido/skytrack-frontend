@@ -182,3 +182,183 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   border: 2px solid var(--panel);
 }
+
+/* ── Páginas legales ──────────────────────────────────────────────── */
+.legal-page {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  overflow-y: auto;
+  z-index: 500;
+  padding: 0;
+}
+
+.legal-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 24px 60px;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+.legal-container h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.legal-container h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-container h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal-container p {
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.legal-container ul {
+  color: var(--text-dim);
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.legal-container ul li {
+  margin-bottom: 0.4rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.legal-container a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.legal-container a:hover {
+  text-decoration: underline;
+}
+
+.legal-date {
+  margin-top: 3rem;
+  font-size: 0.85rem !important;
+  color: var(--text-dim) !important;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+/* Tabla de cookies */
+.cookie-table {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.cookie-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.cookie-table th {
+  background: var(--surface);
+  color: var(--accent);
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid var(--border);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cookie-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+
+.cookie-table tr:nth-child(even) td {
+  background: var(--surface);
+}
+
+/* Contacto */
+.contact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 2rem 0;
+}
+
+.contact-card h2 {
+  color: var(--accent) !important;
+  margin-top: 0 !important;
+  font-size: 1.4rem !important;
+}
+
+.contact-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text) !important;
+  text-decoration: none !important;
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.contact-item:hover {
+  border-color: var(--accent) !important;
+  background: rgba(0, 212, 255, 0.05);
+  text-decoration: none !important;
+}
+
+/* Footer legal en la app */
+.legal-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px;
+  font-size: 11px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.legal-footer a {
+  pointer-events: auto;
+  color: var(--text-dim);
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.legal-footer a:hover {
+  opacity: 1;
+  color: var(--accent);
+}
