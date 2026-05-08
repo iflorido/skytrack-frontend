@@ -34,16 +34,13 @@ export default function Navbar() {
         backdropFilter: 'blur(12px)',
       }}
     >
-      {/* Logo */}
+      {/* Logo SVG — oscuro para tema NASA, dark para tema claro */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg mono font-bold" style={{ color: 'var(--accent)' }}>
-            SKY
-          </span>
-          <span className="text-lg mono font-bold" style={{ color: 'var(--text)' }}>
-            TRACK
-          </span>
-        </div>
+        <img
+          src={isNasa ? '/logo-sky-track.svg' : '/logo-sky-track-dark.svg'}
+          alt="FlySkyTrack"
+          style={{ height: 28 }}
+        />
         {isNasa && (
           <div
             className="text-[10px] px-2 py-0.5 rounded mono uppercase tracking-widest"
