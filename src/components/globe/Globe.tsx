@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import * as Cesium from 'cesium'
 import { useFlightStore } from '../../stores/flightStore'
+import { cesiumViewerRef } from '../../stores/globeStore'
 import { setTrackDataCallback, TrackData } from '../panels/FlightDetailPanel'
 import { useThemeStore } from '../../stores/themeStore'
 import { usePanelStore } from '../../stores/panelStore'
@@ -109,11 +110,13 @@ export default function Globe() {
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
     viewerRef.current = viewer
+    cesiumViewerRef.current = viewer
 
     return () => {
       handler.destroy()
       if (!viewer.isDestroyed()) viewer.destroy()
       viewerRef.current = null
+      cesiumViewerRef.current = null
       billboardsRef.current = null
       icaoToBillboard.current.clear()
     }

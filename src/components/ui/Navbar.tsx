@@ -1,4 +1,6 @@
 import { Sun, Moon, Activity, List, Info, SlidersHorizontal, Wifi, WifiOff } from 'lucide-react'
+import MapSettings from './MapSettings'
+import { cesiumViewerRef } from '../../stores/globeStore'
 import { useTheme } from '../../hooks/useTheme'
 import { useFlightStore } from '../../stores/flightStore'
 import { usePanelStore } from '../../stores/panelStore'
@@ -90,6 +92,9 @@ export default function Navbar() {
           </span>
           <span style={{ color: 'var(--text-dim)' }}>aeronaves</span>
         </div>
+
+        {/* Ajustes del mapa */}
+        <MapSettings isDark={isNasa} viewerRef={cesiumViewerRef} />
 
         {/* Toggle tema */}
         <button

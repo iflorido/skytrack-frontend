@@ -161,3 +161,24 @@ html, body, #root {
 @media (max-width: 480px) {
   .panel { max-height: 70vh; }
 }
+
+/* ── Slider personalizado ─────────────────────────────────────────── */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+}
