@@ -146,10 +146,15 @@ export default function FlightDetailPanel() {
                 <div className="h-px w-6 border-t border-dashed border-[var(--border)]" />
               </div>
               <div className="text-center flex-1">
-                <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
-                  {flightInfo.estArrivalAirport || '????'}
+                <div
+                  className="mono font-bold text-base"
+                  style={{ color: flightInfo.estArrivalAirport ? 'var(--text)' : 'var(--text-dim)' }}
+                >
+                  {flightInfo.estArrivalAirport || 'En vuelo'}
                 </div>
-                <div className="text-[10px] text-[var(--text-dim)]">Destino</div>
+                <div className="text-[10px] text-[var(--text-dim)]">
+                  {flightInfo.estArrivalAirport ? 'Destino' : 'Destino pendiente'}
+                </div>
               </div>
             </div>
           ) : (
