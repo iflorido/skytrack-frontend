@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import * as Cesium from 'cesium'
 import { useFlightStore } from '../../stores/flightStore'
+import { setTrackDataCallback, TrackData } from '../panels/FlightDetailPanel'
 import { useThemeStore } from '../../stores/themeStore'
 import { usePanelStore } from '../../stores/panelStore'
 import { Aircraft } from '../../types'
@@ -42,7 +43,7 @@ export default function Globe() {
   const containerRef = useRef<HTMLDivElement>(null)
   const billboardsRef = useRef<Cesium.BillboardCollection | null>(null)
   const icaoToBillboard = useRef<Map<string, Cesium.Billboard>>(new Map())
-  const trackPolylineRef = useRef<Cesium.Primitive | null>(null)
+  const trackPolylineRef = useRef<Cesium.PolylineCollection | null>(null)
 
   const filteredAircraft = useFlightStore(s => s.filteredAircraft)
   const selectedIcao = useFlightStore(s => s.selectedIcao)
@@ -185,26 +186,52 @@ export default function Globe() {
     })
   }, [filteredAircraft, selectedIcao, isDark])
 
-  // Trazar ruta del avión seleccionado desde los datos del store
+  // Registrar callback para recibir trayectoria desde FlightDetailPanel
   useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer) return
+    setTrackDataCallback((data: TrackData | null) => {
+      const viewer = viewerRef.current
+      if (!viewer) return
 
-    // Eliminar traza anterior
-    if (trackPolylineRef.current) {
-      viewer.scene.primitives.remove(trackPolylineRef.current)
-      trackPolylineRef.current = null
-    }
+      // Eliminar trayectoria anterior
+      if (trackPolylineRef.current) {
+        viewer.scene.primitives.remove(trackPolylineRef.current)
+        trackPolylineRef.current = null
+      }
 
-    if (!selectedIcao) return
+      if (!data || data.waypoints.length < 2) return
 
-    // Obtener posiciones históricas del store (últimas N posiciones)
-    const aircraft = useFlightStore.getState().aircraft.get(selectedIcao)
-    if (!aircraft || !aircraft.latitude || !aircraft.longitude) return
+      // Construir array de posiciones para la polyline
+      const positions: Cesium.Cartesian3[] = []
+      data.waypoints.forEach(wp => {
+        if (wp.latitude !== null && wp.longitude !== null) {
+          positions.push(
+            Cesium.Cartesian3.fromDegrees(
+              wp.longitude,
+              wp.latitude,
+              (wp.baro_altitude ?? 0) + 500
+            )
+          )
+        }
+      })
 
-    // Por ahora mostramos solo la posición actual como punto destacado
-    // La trayectoria completa se carga desde la API en FlightDetailPanel
-  }, [selectedIcao])
+      if (positions.length < 2) return
+
+      // Crear polyline con gradiente de color
+      const polylines = new Cesium.PolylineCollection()
+      polylines.add({
+        positions,
+        width: 2,
+        material: Cesium.Material.fromType('Color', {
+          color: Cesium.Color.fromCssColorString('#00d4ff').withAlpha(0.7),
+        }),
+      })
+
+      viewer.scene.primitives.add(polylines)
+      trackPolylineRef.current = polylines
+    })
+
+    return () => setTrackDataCallback(null)
+  }, [])
 
   const flyToAircraft = useCallback((aircraft: Aircraft) => {
     const viewer = viewerRef.current

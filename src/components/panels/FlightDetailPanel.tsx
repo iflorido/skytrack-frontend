@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Info, X, MapPin, Navigation } from 'lucide-react'
+import { Info, X, Navigation, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import DraggablePanel from './DraggablePanel'
 import { useFlightStore } from '../../stores/flightStore'
 import {
@@ -17,25 +17,55 @@ interface FlightInfo {
   last_seen: number
 }
 
+export interface TrackWaypoint {
+  timestamp: number
+  latitude: number | null
+  longitude: number | null
+  baro_altitude: number | null
+  true_track: number | null
+  on_ground: boolean | null
+}
+
+export interface TrackData {
+  icao24: string
+  callsign: string | null
+  start_time: number
+  end_time: number
+  waypoints: TrackWaypoint[]
+}
+
+// Store global para la trayectoria activa — el Globe la lee
+let trackDataCallback: ((data: TrackData | null) => void) | null = null
+export function setTrackDataCallback(cb: typeof trackDataCallback) {
+  trackDataCallback = cb
+}
+
 export default function FlightDetailPanel() {
   const selectedIcao = useFlightStore(s => s.selectedIcao)
   const aircraft = useFlightStore(s => s.aircraft)
   const selectAircraft = useFlightStore(s => s.selectAircraft)
+
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null)
+  const [trackData, setTrackData] = useState<TrackData | null>(null)
   const [loadingFlight, setLoadingFlight] = useState(false)
+  const [loadingTrack, setLoadingTrack] = useState(false)
+  const [showTrack, setShowTrack] = useState(true)
 
   const a = selectedIcao ? aircraft.get(selectedIcao) : null
 
-  // Cargar info de vuelo cuando se selecciona un avión
+  // Cargar info de vuelo y trayectoria al seleccionar
   useEffect(() => {
     if (!selectedIcao || !a) {
       setFlightInfo(null)
+      setTrackData(null)
+      trackDataCallback?.(null)
       return
     }
 
+    // Cargar info de vuelo (aeropuertos)
     setLoadingFlight(true)
     const now = Math.floor(Date.now() / 1000)
-    const begin = now - 86400 // últimas 24 horas
+    const begin = now - 86400
 
     fetch(`${API_URL}/api/v1/flights/aircraft/${selectedIcao}?begin=${begin}&end=${now}`)
       .then(r => r.ok ? r.json() : null)
@@ -49,13 +79,39 @@ export default function FlightDetailPanel() {
       })
       .catch(() => setFlightInfo(null))
       .finally(() => setLoadingFlight(false))
+
+    // Cargar trayectoria histórica desde nuestra BD
+    setLoadingTrack(true)
+    fetch(`${API_URL}/api/v1/tracks/history/${selectedIcao}?hours=6`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.waypoints?.length > 0) {
+          setTrackData(data)
+          trackDataCallback?.(data)
+        } else {
+          setTrackData(null)
+          trackDataCallback?.(null)
+        }
+      })
+      .catch(() => {
+        setTrackData(null)
+        trackDataCallback?.(null)
+      })
+      .finally(() => setLoadingTrack(false))
   }, [selectedIcao])
+
+  // Propagar cambio de visibilidad de trayectoria al Globe
+  useEffect(() => {
+    trackDataCallback?.(showTrack ? trackData : null)
+  }, [showTrack, trackData])
 
   if (!a) return null
 
   const verticalColor = a.is_climbing
     ? 'var(--success)'
     : a.is_descending ? 'var(--warning)' : 'var(--text-dim)'
+
+  const VIcon = a.is_climbing ? TrendingUp : a.is_descending ? TrendingDown : Minus
 
   return (
     <DraggablePanel
@@ -64,40 +120,74 @@ export default function FlightDetailPanel() {
       icon={<Info size={14} />}
       minWidth={300}
     >
-      <div className="p-3 space-y-3" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+      <div className="p-3 space-y-3" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
 
-        {/* Ruta de vuelo */}
-        {(flightInfo || loadingFlight) && (
-          <div className="p-2 rounded-lg border border-[var(--border)]"
-            style={{ background: 'rgba(0,212,255,0.05)' }}>
-            <div className="text-[10px] uppercase tracking-widest text-[var(--accent)] mono mb-2">
-              Ruta del vuelo
-            </div>
-            {loadingFlight ? (
-              <div className="text-xs text-[var(--text-dim)] text-center py-1">Cargando...</div>
-            ) : flightInfo ? (
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-center">
-                  <div className="mono font-bold text-sm" style={{ color: 'var(--text)' }}>
-                    {flightInfo.est_departure_airport || '???'}
-                  </div>
-                  <div className="text-[10px] text-[var(--text-dim)]">Origen</div>
-                </div>
-                <div className="flex-1 flex items-center gap-1">
-                  <div className="h-px flex-1 border-t border-dashed border-[var(--border)]" />
-                  <Navigation size={12} style={{ color: 'var(--accent)' }} />
-                  <div className="h-px flex-1 border-t border-dashed border-[var(--border)]" />
-                </div>
-                <div className="text-center">
-                  <div className="mono font-bold text-sm" style={{ color: 'var(--text)' }}>
-                    {flightInfo.est_arrival_airport || '???'}
-                  </div>
-                  <div className="text-[10px] text-[var(--text-dim)]">Destino</div>
-                </div>
-              </div>
-            ) : null}
+        {/* Ruta origen → destino */}
+        <div className="p-2 rounded-lg border border-[var(--border)]"
+          style={{ background: 'rgba(0,212,255,0.04)' }}>
+          <div className="text-[10px] uppercase tracking-widest text-[var(--accent)] mono mb-2">
+            Ruta
           </div>
-        )}
+          {loadingFlight ? (
+            <div className="text-xs text-[var(--text-dim)] text-center py-1 mono">Cargando...</div>
+          ) : flightInfo ? (
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-center flex-1">
+                <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
+                  {flightInfo.est_departure_airport || '???'}
+                </div>
+                <div className="text-[10px] text-[var(--text-dim)]">Origen</div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="h-px w-6 border-t border-dashed border-[var(--border)]" />
+                <Navigation size={12} style={{ color: 'var(--accent)' }} />
+                <div className="h-px w-6 border-t border-dashed border-[var(--border)]" />
+              </div>
+              <div className="text-center flex-1">
+                <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
+                  {flightInfo.est_arrival_airport || '???'}
+                </div>
+                <div className="text-[10px] text-[var(--text-dim)]">Destino</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-[var(--text-dim)] text-center py-1">
+              Sin datos de ruta disponibles
+            </div>
+          )}
+        </div>
+
+        {/* Trayectoria en mapa */}
+        <div className="p-2 rounded-lg border border-[var(--border)]"
+          style={{ background: 'rgba(0,212,255,0.04)' }}>
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-[10px] uppercase tracking-widest text-[var(--accent)] mono">
+              Trayectoria
+            </div>
+            <button
+              onClick={() => setShowTrack(v => !v)}
+              className="text-[10px] mono px-2 py-0.5 rounded transition-colors"
+              style={{
+                border: '1px solid var(--border)',
+                color: showTrack ? 'var(--accent)' : 'var(--text-dim)',
+                background: showTrack ? 'rgba(0,212,255,0.1)' : 'transparent',
+              }}
+            >
+              {showTrack ? 'Visible' : 'Oculta'}
+            </button>
+          </div>
+          {loadingTrack ? (
+            <div className="text-xs text-[var(--text-dim)] mono">Cargando trayectoria...</div>
+          ) : trackData ? (
+            <div className="text-xs text-[var(--text-dim)] mono">
+              {trackData.waypoints.length} puntos · últimas 6h
+            </div>
+          ) : (
+            <div className="text-xs text-[var(--text-dim)]">
+              Sin trayectoria histórica (el avión debe llevar activo &gt;150s)
+            </div>
+          )}
+        </div>
 
         {/* Identificación */}
         <Section label="Identificación">
@@ -133,7 +223,7 @@ export default function FlightDetailPanel() {
         </Section>
 
         <button
-          onClick={() => selectAircraft(null)}
+          onClick={() => { selectAircraft(null); trackDataCallback?.(null) }}
           className="w-full flex items-center justify-center gap-2 py-1.5 text-xs
             border border-[var(--border)] rounded-md text-[var(--text-dim)]
             hover:border-[var(--danger)] hover:text-[var(--danger)] transition-colors"
