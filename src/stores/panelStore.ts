@@ -12,7 +12,7 @@ interface PanelStore {
 const DEFAULT_POSITIONS: Record<PanelId, { x: number; y: number }> = {
   stats:        { x: 16, y: 8 },
   filters:      { x: 320, y: 448 },
-  flightList:   { x: 3320, y: 9 },
+  flightList:   { x: 320, y: 9 },
   flightDetail: { x: 16, y: 405 },
 }
 
