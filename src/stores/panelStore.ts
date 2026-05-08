@@ -11,9 +11,9 @@ interface PanelStore {
 
 const DEFAULT_POSITIONS: Record<PanelId, { x: number; y: number }> = {
   stats:        { x: 16, y: 8 },
-  filters:      { x: 16, y: 410 },
-  flightList:   { x: 305, y: 718 },
-  flightDetail: { x: 390, y: 8 },
+  filters:      { x: 320, y: 448 },
+  flightList:   { x: 3320, y: 9 },
+  flightDetail: { x: 16, y: 405 },
 }
 
 function makePanel(id: PanelId, open: boolean): PanelState {
