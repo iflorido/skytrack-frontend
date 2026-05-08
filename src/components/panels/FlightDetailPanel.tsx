@@ -11,10 +11,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://api.flyskytrack.com'
 
 interface FlightInfo {
   callsign: string | null
-  est_departure_airport: string | null
-  est_arrival_airport: string | null
-  first_seen: number
-  last_seen: number
+  estDepartureAirport: string | null
+  estArrivalAirport: string | null
+  firstSeen: number
+  lastSeen: number
 }
 
 export interface TrackWaypoint {
@@ -67,12 +67,14 @@ export default function FlightDetailPanel() {
     const now = Math.floor(Date.now() / 1000)
     const begin = now - 86400
 
+    // Usamos el icao24 del avión (no el callsign) para buscar en OpenSky
     fetch(`${API_URL}/api/v1/flights/aircraft/${selectedIcao}?begin=${begin}&end=${now}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.flights?.length > 0) {
-          const latest = data.flights[data.flights.length - 1]
-          setFlightInfo(latest)
+          // Ordenar por firstSeen desc y coger el más reciente
+          const sorted = [...data.flights].sort((a, b) => b.firstSeen - a.firstSeen)
+          setFlightInfo(sorted[0])
         } else {
           setFlightInfo(null)
         }
@@ -134,7 +136,7 @@ export default function FlightDetailPanel() {
             <div className="flex items-center justify-between gap-2">
               <div className="text-center flex-1">
                 <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
-                  {flightInfo.est_departure_airport || '???'}
+                  {flightInfo.estDepartureAirport || '????'}
                 </div>
                 <div className="text-[10px] text-[var(--text-dim)]">Origen</div>
               </div>
@@ -145,7 +147,7 @@ export default function FlightDetailPanel() {
               </div>
               <div className="text-center flex-1">
                 <div className="mono font-bold text-base" style={{ color: 'var(--text)' }}>
-                  {flightInfo.est_arrival_airport || '???'}
+                  {flightInfo.estArrivalAirport || '????'}
                 </div>
                 <div className="text-[10px] text-[var(--text-dim)]">Destino</div>
               </div>
